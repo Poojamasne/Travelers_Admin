@@ -4,7 +4,7 @@ import SignIn from "layouts/authentication/sign-in";
 import Analytics from "layouts/tables/analytics";
 import Vendors from "layouts/tables/vendor";
 import Hosts from "layouts/tables/user";
-import Rides from "layouts/tables/ride";
+import Ride from "layouts/tables/ride";
 import Promotions from "layouts/tables/promotion";
 import Disputes from "layouts/tables/dispute";
 import Disputemanagement from "layouts/tables/dispute";
@@ -68,7 +68,7 @@ const allRoutes = [
     name: "Rides",
     key: "rides",
     icon: <Icon fontSize="small">directions_car</Icon>,
-    route: "/rides",
+    route: "/ride",
     component: <Rides />,
     permission: "ride_management",
   },
