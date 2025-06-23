@@ -71,10 +71,11 @@ function Rides() {
   // Pagination state
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalRides, setTotalRides] = useState(0);
 
   useEffect(() => {
     fetchRides();
-  }, [statusFilter]);
+  }, [statusFilter, page, rowsPerPage]);
 
   const showSnackbar = (message, severity = "success") => {
     setSnackbar({ open: true, message, severity });
@@ -94,19 +95,22 @@ function Rides() {
         return;
       }
 
-      const response = await fetch(`${BASE_URL}/v1/admin/rides?type=ride&status=${statusFilter}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${BASE_URL}/v1/admin/rides?rideStatus=${statusFilter}&page=${page + 1}&limit=${rowsPerPage}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch rides");
       }
 
       const data = await response.json();
-      setRides(data.data);
-      setPage(0); // Reset to first page when data changes
+      setRides(data.data.rides);
+      setTotalRides(data.data.pagination.total);
     } catch (error) {
       console.error("Error fetching ride data:", error);
       showSnackbar("Error fetching rides", "error");
@@ -221,6 +225,25 @@ function Rides() {
     }),
   };
 
+  const HostCell = ({ value }) => (
+    <Box>
+      <MDTypography variant="caption" fontWeight="medium">
+        {value?.name || "N/A"}
+      </MDTypography>
+      <MDTypography variant="caption" display="block">
+        {value?.vehicleModel || "N/A"} ({value?.vehicleNumber || "N/A"})
+      </MDTypography>
+    </Box>
+  );
+
+  HostCell.propTypes = {
+    value: PropTypes.shape({
+      name: PropTypes.string,
+      vehicleModel: PropTypes.string,
+      vehicleNumber: PropTypes.string,
+    }),
+  };
+
   const AddressCell = ({ value }) => (
     <MDTypography variant="caption" noWrap sx={{ maxWidth: "150px" }}>
       {value}
@@ -255,6 +278,11 @@ function Rides() {
       Header: "User",
       accessor: "User",
       Cell: UserCell,
+    },
+    {
+      Header: "Host",
+      accessor: "Host",
+      Cell: HostCell,
     },
     {
       Header: "Pickup",
@@ -365,19 +393,20 @@ function Rides() {
     },
   ];
 
-  const filteredRides = rides.filter((ride) => {
-    const searchTermLower = searchTerm.toLowerCase();
-    return (
-      (ride.rideId && ride.rideId.toLowerCase().includes(searchTermLower)) ||
-      (ride.User?.name && ride.User.name.toLowerCase().includes(searchTermLower)) ||
-      (ride.User?.phoneNumber && ride.User.phoneNumber.toLowerCase().includes(searchTermLower)) ||
-      (ride.pickupAddress && ride.pickupAddress.toLowerCase().includes(searchTermLower)) ||
-      (ride.dropAddress && ride.dropAddress.toLowerCase().includes(searchTermLower))
-    );
-  });
-
-  // Apply pagination
-  const paginatedRides = filteredRides.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const filteredRides = Array.isArray(rides)
+    ? rides.filter((ride) => {
+        const searchTermLower = searchTerm.toLowerCase();
+        return (
+          (ride.rideId && ride.rideId.toLowerCase().includes(searchTermLower)) ||
+          (ride.User?.name && ride.User.name.toLowerCase().includes(searchTermLower)) ||
+          (ride.User?.phoneNumber &&
+            ride.User.phoneNumber.toLowerCase().includes(searchTermLower)) ||
+          (ride.Host?.name && ride.Host.name.toLowerCase().includes(searchTermLower)) ||
+          (ride.pickupAddress && ride.pickupAddress.toLowerCase().includes(searchTermLower)) ||
+          (ride.dropAddress && ride.dropAddress.toLowerCase().includes(searchTermLower))
+        );
+      })
+    : [];
 
   if (loading) {
     return (
@@ -454,7 +483,7 @@ function Rides() {
               </MDBox>
               <MDBox pt={3}>
                 <DataTable
-                  table={{ columns, rows: paginatedRides }}
+                  table={{ columns, rows: filteredRides }}
                   isSorted={false}
                   entriesPerPage={false}
                   showTotalEntries={false}
@@ -463,7 +492,7 @@ function Rides() {
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25, 50]}
                   component="div"
-                  count={filteredRides.length}
+                  count={totalRides}
                   rowsPerPage={rowsPerPage}
                   page={page}
                   onPageChange={handleChangePage}
@@ -540,6 +569,11 @@ function Rides() {
                       {getPaymentStatusChip(viewRideData.paymentStatus)}
                     </MDTypography>
                   </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>OTP Status:</strong> {viewRideData.otp_status || "N/A"}
+                    </MDTypography>
+                  </Grid>
                   <Grid item xs={12}>
                     <MDTypography>
                       <strong>Created At:</strong>{" "}
@@ -564,6 +598,41 @@ function Rides() {
                   <Grid item xs={12} md={6}>
                     <MDTypography>
                       <strong>Phone:</strong> {viewRideData.User?.phoneNumber || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Email:</strong> {viewRideData.User?.email || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                </Grid>
+              </MDBox>
+
+              <Divider sx={{ my: 2 }} />
+
+              <MDBox mb={3}>
+                <MDTypography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
+                  Host Information
+                </MDTypography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Name:</strong> {viewRideData.Host?.name || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Vehicle Model:</strong> {viewRideData.Host?.vehicleModel || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Vehicle Brand:</strong> {viewRideData.Host?.vehicleBrand || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Vehicle Number:</strong> {viewRideData.Host?.vehicleNumber || "N/A"}
                     </MDTypography>
                   </Grid>
                 </Grid>
@@ -721,6 +790,14 @@ Rides.propTypes = {
         id: PropTypes.number,
         name: PropTypes.string,
         phoneNumber: PropTypes.string,
+        email: PropTypes.string,
+      }),
+      Host: PropTypes.shape({
+        id: PropTypes.number,
+        name: PropTypes.string,
+        vehicleModel: PropTypes.string,
+        vehicleBrand: PropTypes.string,
+        vehicleNumber: PropTypes.string,
       }),
       pickupAddress: PropTypes.string.isRequired,
       dropAddress: PropTypes.string.isRequired,
@@ -736,6 +813,7 @@ Rides.propTypes = {
       paymentStatus: PropTypes.string.isRequired,
       rideStatus: PropTypes.string.isRequired,
       cancellationReason: PropTypes.string,
+      otp_status: PropTypes.string,
       rating: PropTypes.number,
       review: PropTypes.string,
       createdAt: PropTypes.string.isRequired,
