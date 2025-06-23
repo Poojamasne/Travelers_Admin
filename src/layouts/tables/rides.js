@@ -393,20 +393,17 @@ function Rides() {
     },
   ];
 
-  const filteredRides = Array.isArray(rides)
-    ? rides.filter((ride) => {
-        const searchTermLower = searchTerm.toLowerCase();
-        return (
-          (ride.rideId && ride.rideId.toLowerCase().includes(searchTermLower)) ||
-          (ride.User?.name && ride.User.name.toLowerCase().includes(searchTermLower)) ||
-          (ride.User?.phoneNumber &&
-            ride.User.phoneNumber.toLowerCase().includes(searchTermLower)) ||
-          (ride.Host?.name && ride.Host.name.toLowerCase().includes(searchTermLower)) ||
-          (ride.pickupAddress && ride.pickupAddress.toLowerCase().includes(searchTermLower)) ||
-          (ride.dropAddress && ride.dropAddress.toLowerCase().includes(searchTermLower))
-        );
-      })
-    : [];
+  const filteredRides = (Array.isArray(rides) ? rides : []).filter((ride) => {
+    const searchTermLower = searchTerm.toLowerCase();
+    return (
+      (ride.rideId && ride.rideId.toLowerCase().includes(searchTermLower)) ||
+      (ride.User?.name && ride.User.name.toLowerCase().includes(searchTermLower)) ||
+      (ride.User?.phoneNumber && ride.User.phoneNumber.toLowerCase().includes(searchTermLower)) ||
+      (ride.Host?.name && ride.Host.name.toLowerCase().includes(searchTermLower)) ||
+      (ride.pickupAddress && ride.pickupAddress.toLowerCase().includes(searchTermLower)) ||
+      (ride.dropAddress && ride.dropAddress.toLowerCase().includes(searchTermLower))
+    );
+  });
 
   if (loading) {
     return (
