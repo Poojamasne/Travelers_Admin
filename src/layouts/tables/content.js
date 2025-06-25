@@ -226,7 +226,7 @@ function Content() {
         return;
       }
 
-      const response = await fetch(`${BASE_URL}/v1/cms/content/${id}`, {
+      const response = await fetch(`${BASE_URL}/v1/cms/delete/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -57,7 +57,7 @@ function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [userType, setUserType] = useState("user");
+  const [userType, setUserType] = useState("host"); // Default to host since we're working with host data
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -138,7 +138,7 @@ function Users() {
     setKycData({
       id: user.id,
       verificationStatus: user.kycStatus || "pending",
-      remarks: "",
+      remarks: user.kycRemarks || "",
     });
     setOpenKycDialog(true);
   };
@@ -291,14 +291,17 @@ function Users() {
   const handleViewImage = (imageUrl) => {
     if (!imageUrl) return;
     setImageLoading(true);
-    setCurrentImage(`${BASE_URL}/${imageUrl}`);
+    // Check if the URL is already complete or needs BASE_URL prefix
+    const fullUrl = imageUrl.startsWith("http") ? imageUrl : `${BASE_URL}/${imageUrl}`;
+    setCurrentImage(fullUrl);
     setOpenImageDialog(true);
   };
 
   const handleDownloadImage = (imageUrl) => {
     if (!imageUrl) return;
+    const fullUrl = imageUrl.startsWith("http") ? imageUrl : `${BASE_URL}/${imageUrl}`;
     const link = document.createElement("a");
-    link.href = `${BASE_URL}/${imageUrl}`;
+    link.href = fullUrl;
     link.target = "_blank";
     link.download = imageUrl.split("/").pop();
     document.body.appendChild(link);
@@ -312,7 +315,7 @@ function Users() {
     return (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Avatar
-          src={`${BASE_URL}/${imageUrl}`}
+          src={imageUrl.startsWith("http") ? imageUrl : `${BASE_URL}/${imageUrl}`}
           variant="rounded"
           sx={{ width: 56, height: 56 }}
           onClick={() => handleViewImage(imageUrl)}
@@ -343,7 +346,7 @@ function Users() {
   const columns = [
     { Header: "ID", accessor: "id" },
     { Header: "Name", accessor: "name", Cell: ({ value }) => value || "N/A" },
-    // { Header: "Email", accessor: "email", Cell: ({ value }) => value || "N/A" },
+    { Header: "Email", accessor: "email", Cell: ({ value }) => value || "N/A" },
     { Header: "Mobile Number", accessor: "mobileNumber" },
     {
       Header: "Status",
@@ -354,11 +357,6 @@ function Users() {
       Header: "KYC Status",
       accessor: "kycStatus",
       Cell: ({ value }) => getKycStatusChip(value),
-    },
-    {
-      Header: "Terms Accepted",
-      accessor: "terms_accepted",
-      Cell: ({ value }) => (value ? "Yes" : "No"),
     },
     {
       Header: "Actions",
@@ -461,7 +459,7 @@ function Users() {
     return (
       (user.name && user.name.toLowerCase().includes(searchTermLower)) ||
       (user.email && user.email.toLowerCase().includes(searchTermLower)) ||
-      (user.mobile_number && user.mobile_number.toLowerCase().includes(searchTermLower))
+      (user.mobileNumber && user.mobileNumber.toLowerCase().includes(searchTermLower))
     );
   });
 
@@ -599,12 +597,12 @@ function Users() {
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <MDTypography>
-                      <strong>Mobile:</strong> {viewUserData.mobile_number}
+                      <strong>Mobile:</strong> {viewUserData.mobileNumber}
                     </MDTypography>
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <MDTypography>
-                      <strong>Verified:</strong> {viewUserData.isVerified ? "Yes" : "No"}
+                      <strong>Gender:</strong> {viewUserData.gender || "N/A"}
                     </MDTypography>
                   </Grid>
                   <Grid item xs={12} md={6}>
@@ -619,7 +617,8 @@ function Users() {
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <MDTypography>
-                      <strong>Terms Accepted:</strong> {viewUserData.terms_accepted ? "Yes" : "No"}
+                      <strong>Profile Photo:</strong>
+                      {renderImageWithPreview(viewUserData.profilePhoto, "Profile Photo")}
                     </MDTypography>
                   </Grid>
                   <Grid item xs={12} md={6}>
@@ -628,49 +627,156 @@ function Users() {
                       {new Date(viewUserData.createdAt).toLocaleString()}
                     </MDTypography>
                   </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Updated At:</strong>{" "}
+                      {new Date(viewUserData.updatedAt).toLocaleString()}
+                    </MDTypography>
+                  </Grid>
                 </Grid>
               </MDBox>
 
-              {userType === "host" && viewUserData.businessInfo && (
-                <>
-                  <Divider sx={{ my: 2 }} />
-                  <MDBox mb={3}>
-                    <MDTypography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-                      Business Information
+              <Divider sx={{ my: 2 }} />
+              <MDBox mb={3}>
+                <MDTypography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
+                  Vehicle Information
+                </MDTypography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Vehicle Owner Name:</strong> {viewUserData.vehicleOwnerName || "N/A"}
                     </MDTypography>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <MDTypography>
-                          <strong>Owner Name:</strong> {viewUserData.businessInfo.owner_full_name}
-                        </MDTypography>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <MDTypography>
-                          <strong>Restaurant Name:</strong>{" "}
-                          {viewUserData.businessInfo.restaurant_name}
-                        </MDTypography>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <MDTypography>
-                          <strong>Business Type:</strong> {viewUserData.businessInfo.business_type}
-                        </MDTypography>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <MDTypography>
-                          <strong>Business Registration Number:</strong>{" "}
-                          {viewUserData.businessInfo.business_registration_number}
-                        </MDTypography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <MDTypography>
-                          <strong>Business Address:</strong>{" "}
-                          {viewUserData.businessInfo.business_address}
-                        </MDTypography>
-                      </Grid>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Vehicle Brand:</strong> {viewUserData.vehicleBrand || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Vehicle Model:</strong> {viewUserData.vehicleModel || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Vehicle Number:</strong> {viewUserData.vehicleNumber || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Vehicle Registration Year:</strong>{" "}
+                      {viewUserData.vehicleRegistrationYear || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Car Image:</strong>
+                      {renderImageWithPreview(viewUserData.carImage, "Car Image")}
+                    </MDTypography>
+                  </Grid>
+                </Grid>
+              </MDBox>
+
+              <Divider sx={{ my: 2 }} />
+              <MDBox mb={3}>
+                <MDTypography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
+                  Document Information
+                </MDTypography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Aadhar Card:</strong> {viewUserData.aadharCard || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Driving Licence:</strong> {viewUserData.drivingLicence || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Owner Aadhar Card:</strong>
+                      {renderImageWithPreview(viewUserData.owner_Adharcard, "Owner Aadhar Card")}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Owner Passport:</strong>
+                      {renderImageWithPreview(viewUserData.owner_passport, "Owner Passport")}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Owner Driving Licence:</strong>
+                      {renderImageWithPreview(
+                        viewUserData.owner_drivingLicences,
+                        "Owner Driving Licence"
+                      )}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Owner Aadhar Front Side:</strong>
+                      {renderImageWithPreview(
+                        viewUserData.owner_AdharcardFrontSide,
+                        "Aadhar Front"
+                      )}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Owner Aadhar Back Side:</strong>
+                      {renderImageWithPreview(viewUserData.owner_AdharcardBackSide, "Aadhar Back")}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Owner Live Selfie:</strong>
+                      {renderImageWithPreview(viewUserData.owner_LiveSelfie, "Live Selfie")}
+                    </MDTypography>
+                  </Grid>
+                  {viewUserData.kycRemarks && (
+                    <Grid item xs={12}>
+                      <MDTypography>
+                        <strong>KYC Remarks:</strong> {viewUserData.kycRemarks}
+                      </MDTypography>
                     </Grid>
-                  </MDBox>
-                </>
-              )}
+                  )}
+                  {viewUserData.kycVerifiedAt && (
+                    <Grid item xs={12} md={6}>
+                      <MDTypography>
+                        <strong>KYC Verified At:</strong>{" "}
+                        {new Date(viewUserData.kycVerifiedAt).toLocaleString()}
+                      </MDTypography>
+                    </Grid>
+                  )}
+                </Grid>
+              </MDBox>
+
+              {/* Social Information */}
+              <Divider sx={{ my: 2 }} />
+              <MDBox mb={3}>
+                <MDTypography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
+                  Social Information
+                </MDTypography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Google ID:</strong> {viewUserData.googleId || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Facebook ID:</strong> {viewUserData.facebookId || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <MDTypography>
+                      <strong>Apple ID:</strong> {viewUserData.appleId || "N/A"}
+                    </MDTypography>
+                  </Grid>
+                </Grid>
+              </MDBox>
             </MDBox>
           )}
         </DialogContent>
@@ -692,10 +798,6 @@ function Users() {
                 value={kycData.verificationStatus}
                 onChange={(e) => setKycData({ ...kycData, verificationStatus: e.target.value })}
                 label="Verification Status"
-                sx={{
-                  width: 200,
-                  height: 35,
-                }}
               >
                 <MenuItem value="pending">Pending</MenuItem>
                 <MenuItem value="approved">Approved</MenuItem>
@@ -738,10 +840,6 @@ function Users() {
                 value={statusData.status}
                 onChange={(e) => setStatusData({ ...statusData, status: e.target.value })}
                 label="Status"
-                sx={{
-                  width: 300,
-                  height: 35,
-                }}
               >
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="suspend">Suspend</MenuItem>
@@ -854,12 +952,9 @@ Users.propTypes = {
       id: PropTypes.number.isRequired,
       name: PropTypes.string,
       email: PropTypes.string,
-      mobile_number: PropTypes.string.isRequired,
-      isVerified: PropTypes.number,
-      kycStatus: PropTypes.string,
+      mobileNumber: PropTypes.string.isRequired,
       status: PropTypes.string,
-      terms_accepted: PropTypes.number,
-      onboarding_completed: PropTypes.number,
+      kycStatus: PropTypes.string,
       createdAt: PropTypes.string.isRequired,
     }).isRequired,
   }).isRequired,

@@ -75,6 +75,7 @@ function Notifications() {
     priority: "medium",
     status: "draft",
     scheduledAt: "",
+    sentAt: "",
     imageUrl: "",
     actionUrl: "",
     targetIds: [],
@@ -88,6 +89,7 @@ function Notifications() {
     priority: "medium",
     status: "draft",
     scheduledAt: "",
+    sentAt: "",
     imageUrl: "",
     actionUrl: "",
     targetIds: [],
@@ -174,6 +176,7 @@ function Notifications() {
       priority: notification.priority,
       status: notification.status,
       scheduledAt: notification.scheduledAt ? notification.scheduledAt.split("T")[0] : "",
+      sentAt: notification.sentAt ? notification.sentAt.split("T")[0] : "",
       imageUrl: notification.imageUrl || "",
       actionUrl: notification.actionUrl || "",
       targetIds: notification.targetIds || [],
@@ -213,6 +216,7 @@ function Notifications() {
           priority: editData.priority,
           status: editData.status,
           scheduledAt: editData.scheduledAt ? `${editData.scheduledAt}T00:00:00Z` : null,
+          sentAt: editData.sentAt ? `${editData.sentAt}T00:00:00Z` : null,
           imageUrl: editData.imageUrl || null,
           actionUrl: editData.actionUrl || null,
           targetIds: editData.targetIds,
@@ -287,6 +291,7 @@ function Notifications() {
           scheduledAt: newNotification.scheduledAt
             ? `${newNotification.scheduledAt}T00:00:00Z`
             : null,
+          sentAt: newNotification.sentAt ? `${newNotification.sentAt}T00:00:00Z` : null,
           imageUrl: newNotification.imageUrl || null,
           actionUrl: newNotification.actionUrl || null,
           targetIds: newNotification.targetIds,
@@ -307,6 +312,7 @@ function Notifications() {
         priority: "medium",
         status: "draft",
         scheduledAt: "",
+        sentAt: "",
         imageUrl: "",
         actionUrl: "",
         targetIds: [],
@@ -744,7 +750,7 @@ function Notifications() {
                   <Grid item xs={12}>
                     <MDTypography>
                       <strong>Created At:</strong>{" "}
-                      {new Date(viewNotificationData.created_at).toLocaleString()}
+                      {new Date(viewNotificationData.createdAt).toLocaleString()}
                     </MDTypography>
                   </Grid>
                 </Grid>
@@ -878,6 +884,17 @@ function Notifications() {
                   InputLabelProps={{ shrink: true }}
                   value={editData.scheduledAt}
                   onChange={(e) => setEditData({ ...editData, scheduledAt: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Sent At"
+                  fullWidth
+                  margin="normal"
+                  type="datetime-local"
+                  InputLabelProps={{ shrink: true }}
+                  value={editData.sentAt}
+                  onChange={(e) => setEditData({ ...editData, sentAt: e.target.value })}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -1072,6 +1089,19 @@ function Notifications() {
                   value={newNotification.scheduledAt}
                   onChange={(e) =>
                     setNewNotification({ ...newNotification, scheduledAt: e.target.value })
+                  }
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Sent At"
+                  fullWidth
+                  margin="normal"
+                  type="datetime-local"
+                  InputLabelProps={{ shrink: true }}
+                  value={newNotification.sentAt}
+                  onChange={(e) =>
+                    setNewNotification({ ...newNotification, sentAt: e.target.value })
                   }
                 />
               </Grid>

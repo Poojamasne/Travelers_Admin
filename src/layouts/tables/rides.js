@@ -141,15 +141,15 @@ function Rides() {
         return;
       }
 
-      const response = await fetch(`${BASE_URL}/v1/admin/rides/${statusData.id}/status`, {
+      const response = await fetch(`${BASE_URL}/v1/rides/status`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          type: "ride",
-          status: statusData.status,
+          id: statusData.id,
+          rideStatus: statusData.status,
         }),
       });
 
@@ -157,7 +157,8 @@ function Rides() {
         throw new Error("Failed to update ride status");
       }
 
-      showSnackbar("Ride status updated successfully");
+      const data = await response.json();
+      showSnackbar(data.message || "Ride status updated successfully");
       setOpenStatusDialog(false);
       fetchRides();
     } catch (error) {
